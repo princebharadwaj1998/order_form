@@ -1,500 +1,466 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
+<!doctype html>
+<html lang="en">
 <head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <meta http-equiv="Content-Style-Type" content="text/css">
-  <title></title>
-  <meta name="Generator" content="Cocoa HTML Writer">
-  <meta name="CocoaVersion" content="2685.1">
-  <style type="text/css">
-    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
-    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Order Book – Reverse Position Simulator (Dynamic)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f141b;
+      --panel2:#0c1117;
+      --text:#e6e9ef;
+      --muted:#9aa4b2;
+      --line:#1b2430;
+      --accent:#f07d6e;
+      --good:#7ee787;
+      --bad:#ff6b6b;
+      --chip:#141c25;
+      --shadow: 0 10px 40px rgba(0,0,0,.45);
+      --radius: 14px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 50% -20%, rgba(255,255,255,.08), transparent 60%), var(--bg);
+      color:var(--text);
+      display:flex;
+      justify-content:center;
+      padding:22px 12px;
+    }
+    .phone{
+      width:min(440px, 100%);
+      border:1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 35%), var(--panel2);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding:18px 18px 10px 18px;
+      border-bottom:1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);
+    }
+    .toprow{display:flex;gap:12px;align-items:center;}
+    .logo{
+      width:44px;height:44px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.14);
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), rgba(255,255,255,.05));
+      display:flex;align-items:center;justify-content:center;
+      font-weight:700;letter-spacing:.5px;color:#dfe6f3;flex:0 0 auto;
+    }
+    .titleblock{min-width:0}
+    .title{font-size:22px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .subtitle{margin-top:4px;font-size:13px;color:var(--muted);}
+
+    .tabs{display:flex;padding:12px 18px 0 18px;gap:14px;font-weight:600;color:var(--muted);}
+    .tabs .active{color:var(--text);position:relative;padding-bottom:10px;}
+    .tabs .active:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.65);border-radius:999px;}
+
+    .segmented{
+      margin:16px 18px 0 18px;
+      display:flex;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      overflow:hidden;
+      background: rgba(255,255,255,.02);
+    }
+    .segmented button{
+      flex:1;
+      padding:12px 10px;
+      border:0;
+      color:rgba(255,255,255,.55);
+      background:transparent;
+      font-weight:700;
+      cursor:not-allowed;
+    }
+    .segmented button.active{
+      background: var(--accent);
+      color:#171717;
+      cursor:default;
+    }
+
+    .section{padding:16px 18px;}
+    .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:10px 0;}
+    .label{color:var(--muted); font-size:14px}
+    .value{font-size:16px; font-weight:650}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--chip);
+      border:1px solid rgba(255,255,255,.07);
+      padding:6px 10px;border-radius:999px;
+      font-size:12px;color:rgba(255,255,255,.75);
+    }
+
+    .posline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:14px;}
+    .pill{
+      font-weight:800;letter-spacing:.6px;font-size:12px;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+    }
+    .pill.long{color:var(--good)}
+    .pill.short{color:var(--bad)}
+
+    .inputbox{
+      margin-top:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      padding:10px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .inputbox .hint{color:rgba(255,255,255,.35);font-weight:650;}
+    input[type="number"]{
+      width:140px;
+      background:transparent;border:0;outline:none;color:var(--text);
+      font-size:18px;font-weight:750;text-align:right;appearance:textfield;
+      font-variant-numeric: tabular-nums;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+
+    .topinputs{
+      padding:14px 18px 0 18px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    .field{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      padding:10px 12px;
+    }
+    .fieldlabel{
+      color:rgba(255,255,255,.55);
+      font-size:12px;
+      font-weight:700;
+      margin-bottom:6px;
+    }
+    .field .inline{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+    }
+    .prefix, .suffix{color:rgba(255,255,255,.55);font-weight:750;}
+    .smallnote{color:rgba(255,255,255,.45);font-size:12px;margin-top:6px;line-height:1.25;}
+
+    .sliderwrap{margin-top:14px;display:flex;gap:12px;align-items:center;}
+    input[type="range"]{flex:1;accent-color: rgba(255,255,255,.55);}
+    .pct{
+      width:56px;text-align:center;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 10px;padding:10px 8px;font-weight:800;color:rgba(255,255,255,.85);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meta{margin-top:10px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;color:rgba(255,255,255,.72);font-size:13px;}
+
+    .checkbox{margin-top:14px;display:flex;gap:10px;align-items:center;color:rgba(255,255,255,.80);}
+    .checkbox input{width:18px;height:18px}
+
+    .cta{
+      margin:16px 18px 0 18px;
+      background: var(--accent);
+      color:#121212;border:0;
+      width:calc(100% - 36px);
+      padding:14px 12px;border-radius: 12px;
+      font-weight:850;font-size:16px;cursor:not-allowed;
+    }
+
+    .footpanel{padding:14px 18px 18px 18px;background: rgba(255,255,255,.01);border-top:1px solid var(--line);}
+    .summary{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.18);
+      border-radius: 14px;padding:14px;
+    }
+    .summary .row{margin:8px 0}
+    .divider{height:1px;background:var(--line);margin:16px 0;}
+    .muted{color:var(--muted)}
+    .num{font-variant-numeric: tabular-nums}
   </style>
 </head>
+
 <body>
-<p class="p1">&lt;!doctype html&gt;</p>
-<p class="p1">&lt;html lang="en"&gt;</p>
-<p class="p1">&lt;head&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="utf-8" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Order Book – Reverse Position Simulator&lt;/title&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>:root{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--bg:#0b0f14;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--panel:#0f141b;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--panel2:#0c1117;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--text:#e6e9ef;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--muted:#9aa4b2;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--line:#1b2430;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--accent:#f07d6e; /* sell button */</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--good:#7ee787; <span class="Apple-converted-space">  </span>/* long / positive */</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--bad:#ff6b6b;<span class="Apple-converted-space">    </span>/* short / negative */</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--chip:#141c25;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--shadow: 0 10px 40px rgba(0,0,0,.45);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>--radius: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>*{box-sizing:border-box}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>body{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(1200px 800px at 50% -20%, rgba(255,255,255,.08), transparent 60%), var(--bg);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--text);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:22px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.phone{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width:min(420px, 100%);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.06);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 35%), var(--panel2);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>box-shadow: var(--shadow);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>header{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:18px 18px 10px 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-bottom:1px solid var(--line);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: linear-gradient(180deg, rgba(255,255,255,.03), transparent);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.toprow{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.logo{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width:44px;height:44px;border-radius:50%;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.14);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.20), rgba(255,255,255,.05));</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;align-items:center;justify-content:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:700;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.5px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:#dfe6f3;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex:0 0 auto;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.titleblock{min-width:0}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.title{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:22px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:700;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>line-height:1.15;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>white-space:nowrap;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-overflow:ellipsis;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.subtitle{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top:4px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:13px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--muted);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tabs{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:12px 18px 0 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:600;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--muted);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tabs .active{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--text);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position:relative;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding-bottom:10px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.tabs .active:after{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>content:"";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>position:absolute;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>left:0;right:0;bottom:0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height:2px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background:rgba(255,255,255,.65);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius:999px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.segmented{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:16px 18px 0 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.08);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>overflow:hidden;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,.02);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.segmented button{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex:1;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:12px 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.55);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background:transparent;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:700;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor:not-allowed; /* keep static per prompt */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.segmented button.active{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:#171717;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor:default;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.section{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:16px 18px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.row{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:baseline;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content:space-between;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:10px 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.label{color:var(--muted); font-size:14px}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.value{font-size:16px; font-weight:650}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.chip{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:inline-flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background:var(--chip);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.07);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:6px 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius:999px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.75);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.posline{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-wrap:wrap;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--muted);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.pill{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:800;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>letter-spacing:.6px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:4px 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius:999px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.10);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,.03);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.pill.long{color:var(--good)}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.pill.short{color:var(--bad)}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.inputbox{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top:14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.10);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.18);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:10px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content:space-between;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:10px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.inputbox .hint{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.35);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:650;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>input[type="number"]{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width:120px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background:transparent;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>outline:none;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:var(--text);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:750;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-align:right;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>appearance:textfield;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>input[type="number"]::-webkit-outer-spin-button,</p>
-<p class="p1"><span class="Apple-converted-space">    </span>input[type="number"]::-webkit-inner-spin-button{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>-webkit-appearance:none;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.sliderwrap{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top:14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>input[type="range"]{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex:1;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>accent-color: rgba(255,255,255,.55);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.pct{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width:56px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>text-align:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.10);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.18);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:10px 8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:800;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.85);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.meta{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top:10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>justify-content:flex-end;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:8px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>flex-wrap:wrap;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.72);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:13px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.checkbox{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin-top:14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>display:flex;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>gap:10px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>align-items:center;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:rgba(255,255,255,.80);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.checkbox input{width:18px;height:18px}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.cta{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:16px 18px 0 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: var(--accent);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>color:#121212;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:0;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>width:calc(100% - 36px);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:14px 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 12px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-weight:850;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>font-size:16px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>cursor:not-allowed; /* static */</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.divider{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>height:1px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background:var(--line);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>margin:16px 0;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>.footpanel{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:14px 18px 18px 18px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(255,255,255,.01);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-top:1px solid var(--line);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.summary{</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border:1px solid rgba(255,255,255,.08);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>background: rgba(0,0,0,.18);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>border-radius: 14px;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>padding:14px;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.summary .row{margin:8px 0}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.muted{color:var(--muted)}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.num{font-variant-numeric: tabular-nums}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>.right{ text-align:right }</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
-<p class="p1">&lt;/head&gt;</p>
-<p class="p2"><br></p>
-<p class="p1">&lt;body&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;div class="phone" role="application" aria-label="Order book simulator"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;header&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="toprow"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="logo"&gt;MC&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="titleblock"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="title"&gt;Manchester City&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="subtitle"&gt;EPL Winner 2026&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/header&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="tabs" aria-hidden="true"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="active"&gt;Market&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div&gt;Limit&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="segmented" aria-hidden="true"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button type="button"&gt;Long / Buy&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;button type="button" class="active"&gt;Short / Sell&lt;/button&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="section"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="label"&gt;Available to trade&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="value num" id="available"&gt;$10,000.0&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="posline"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="label"&gt;Current position&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;span class="pill long" id="currentSide"&gt;LONG&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="value num"&gt;&lt;span id="currentShares"&gt;100.0&lt;/span&gt; &lt;span class="label"&gt;shares&lt;/span&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="inputbox"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="hint"&gt;Shares&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input id="sharesInput" type="number" min="0" step="1" value="150" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="sliderwrap"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input id="sharesSlider" type="range" min="0" max="500" step="1" value="150" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="pct num" id="pctBox"&gt;4%&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="meta"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="chip"&gt;Avg. &lt;span class="num" id="avgPrice"&gt;50.0¢&lt;/span&gt;&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;span class="chip"&gt;&lt;span class="num" id="matching"&gt;150.0&lt;/span&gt; matching&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="checkbox"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;input type="checkbox" id="reduceOnly" /&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;label for="reduceOnly"&gt;Reduce only&lt;/label&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;button class="cta" type="button"&gt;Short Man City&lt;/button&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="section"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="label"&gt;To pay&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="value num" id="toPay"&gt;--&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="label"&gt;To receive&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="value num" id="toReceive"&gt;$25.0&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="footpanel"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;div class="summary"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="label"&gt;Net Position&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="value num"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;span id="netShares"&gt;50.0&lt;/span&gt; &lt;span class="label"&gt;Shares&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>&lt;span class="pill short" id="netSide" style="margin-left:8px;"&gt;SHORT&lt;/span&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="label"&gt;To win&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="value num" id="toWin"&gt;$50.0&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="divider"&gt;&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="row"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="label"&gt;What this simulator assumes&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;div class="muted" style="font-size:12px; line-height:1.35; max-width:260px;"&gt;</p>
-<p class="p1"><span class="Apple-converted-space">            </span>You’re on &lt;b&gt;Short/Sell&lt;/b&gt;. If you sell more than your current long, the extra becomes a new short.</p>
-<p class="p1"><span class="Apple-converted-space">            </span>“To receive” reflects only the proceeds from the &lt;i&gt;extra short&lt;/i&gt; (shares beyond the long you’re closing),</p>
-<p class="p1"><span class="Apple-converted-space">            </span>at the current share price.</p>
-<p class="p1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;script&gt;</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ====== CONFIG (keep everything else static; change these only if you want to) ======</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const CONFIG = {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>availableToTradeUsd: 10000.0, <span class="Apple-converted-space">  </span>// displayed only</p>
-<p class="p1"><span class="Apple-converted-space">      </span>currentLongShares: 100.0, <span class="Apple-converted-space">      </span>// user currently LONG</p>
-<p class="p1"><span class="Apple-converted-space">      </span>pricePerShareUsd: 0.50, <span class="Apple-converted-space">        </span>// 50 cents</p>
-<p class="p1"><span class="Apple-converted-space">      </span>contractPayoutUsd: 1.00,<span class="Apple-converted-space">        </span>// used for "To win"</p>
-<p class="p1"><span class="Apple-converted-space">      </span>sliderMaxShares: 500</p>
-<p class="p1"><span class="Apple-converted-space">    </span>};</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ====== HELPERS ======</p>
-<p class="p1"><span class="Apple-converted-space">    </span>const $ = (id) =&gt; document.getElementById(id);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function fmtUsd(x){</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// keep 1 decimal like the screenshot ($25.0)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const v = Math.round(x * 10) / 10;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return "$" + v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function fmtNum1(x){</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const v = Math.round(x * 10) / 10;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>return v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ====== CORE LOGIC (matches your described behavior) ======</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// Selling quantity Q against an existing long L:</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - Closes min(Q, L) long shares</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - If Q &gt; L, opens (Q - L) new short shares</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// UI:</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - To receive = (Q - L)+ * price</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - To pay = 0 (shown as --)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - Net Position = L - Q (positive =&gt; LONG, negative =&gt; SHORT)</p>
-<p class="p1"><span class="Apple-converted-space">    </span>// - To win = abs(net) * $1</p>
-<p class="p1"><span class="Apple-converted-space">    </span>function recompute(){</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const L = CONFIG.currentLongShares;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const price = CONFIG.pricePerShareUsd;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const payout = CONFIG.contractPayoutUsd;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const Qraw = parseFloat($("sharesInput").value || "0");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const Q = clamp(isFinite(Qraw) ? Qraw : 0, 0, CONFIG.sliderMaxShares);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// keep slider + input in sync</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (parseFloat($("sharesSlider").value) !== Q) $("sharesSlider").value = Q;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (parseFloat($("sharesInput").value) !== Q) $("sharesInput").value = Q;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// net after sell</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const net = L - Q; <span class="Apple-converted-space">                </span>// + =&gt; long, - =&gt; short</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const netAbs = Math.abs(net);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// extra short opened (only beyond closing existing long)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const extraShort = Math.max(Q - L, 0);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const toReceive = extraShort * price;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const toWin = netAbs * payout;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Render top stats</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("available").textContent = fmtUsd(CONFIG.availableToTradeUsd);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("currentShares").textContent = fmtNum1(L);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("avgPrice").textContent = (price * 100).toFixed(1) + "¢";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("matching").textContent = fmtNum1(Q);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Render pay/receive</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("toPay").textContent = "--";</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("toReceive").textContent = fmtUsd(toReceive);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Render net position block</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("netShares").textContent = fmtNum1(netAbs);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("toWin").textContent = fmtUsd(toWin);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>const netSideEl = $("netSide");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if (net &lt; 0){</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.textContent = "SHORT";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.remove("long");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.add("short");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else if (net &gt; 0){</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.textContent = "LONG";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.remove("short");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.add("long");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>} else {</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// flat: show SHORT style off; keep label as FLAT</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.textContent = "FLAT";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.remove("short");</p>
-<p class="p1"><span class="Apple-converted-space">        </span>netSideEl.classList.remove("long");</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Percentage box (purely cosmetic; keep it stable-ish like screenshot)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Here: show Q as % of slider max.</p>
-<p class="p1"><span class="Apple-converted-space">      </span>const pct = Math.round((Q / CONFIG.sliderMaxShares) * 100);</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("pctBox").textContent = pct + "%";</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">      </span>// Reduce-only behavior (optional UX): if enabled, cap Q at current long (cannot go net short)</p>
-<p class="p1"><span class="Apple-converted-space">      </span>if ($("reduceOnly").checked &amp;&amp; Q &gt; L){</p>
-<p class="p1"><span class="Apple-converted-space">        </span>$("sharesInput").value = L;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>$("sharesSlider").value = L;</p>
-<p class="p1"><span class="Apple-converted-space">        </span>// recompute once after enforcing cap</p>
-<p class="p1"><span class="Apple-converted-space">        </span>$("reduceOnly").dataset.enforced = "1";</p>
-<p class="p1"><span class="Apple-converted-space">        </span>return recompute();</p>
-<p class="p1"><span class="Apple-converted-space">      </span>}</p>
-<p class="p1"><span class="Apple-converted-space">    </span>}</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>// ====== INIT ======</p>
-<p class="p1"><span class="Apple-converted-space">    </span>$("sharesSlider").max = String(CONFIG.sliderMaxShares);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>$("sharesSlider").value = $("sharesInput").value;</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>$("sharesInput").addEventListener("input", recompute);</p>
-<p class="p1"><span class="Apple-converted-space">    </span>$("sharesSlider").addEventListener("input", () =&gt; {</p>
-<p class="p1"><span class="Apple-converted-space">      </span>$("sharesInput").value = $("sharesSlider").value;</p>
-<p class="p1"><span class="Apple-converted-space">      </span>recompute();</p>
-<p class="p1"><span class="Apple-converted-space">    </span>});</p>
-<p class="p1"><span class="Apple-converted-space">    </span>$("reduceOnly").addEventListener("change", recompute);</p>
-<p class="p2"><br></p>
-<p class="p1"><span class="Apple-converted-space">    </span>recompute();</p>
-<p class="p1"><span class="Apple-converted-space">  </span>&lt;/script&gt;</p>
-<p class="p1">&lt;/body&gt;</p>
-<p class="p1">&lt;/html&gt;</p>
+  <div class="phone" role="application" aria-label="Order book simulator">
+    <header>
+      <div class="toprow">
+        <div class="logo">MC</div>
+        <div class="titleblock">
+          <div class="title">Manchester City</div>
+          <div class="subtitle">EPL Winner 2026</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- New: top inputs -->
+    <div class="topinputs">
+      <div class="field">
+        <div class="fieldlabel">Total cash balance</div>
+        <div class="inline">
+          <span class="prefix">$</span>
+          <input id="cashBalanceInput" type="number" min="0" step="0.1" value="100" />
+        </div>
+        <div class="smallnote">Used to compute “Available to trade”.</div>
+      </div>
+
+      <div class="field">
+        <div class="fieldlabel">Avg. price</div>
+        <div class="inline">
+          <input id="avgPriceInputCents" type="number" min="0" max="100" step="0.1" value="50" />
+          <span class="suffix">¢</span>
+        </div>
+        <div class="smallnote">Sell long at this price. Short costs (1 − price).</div>
+      </div>
+    </div>
+
+    <div class="tabs" aria-hidden="true">
+      <div class="active">Market</div>
+      <div>Limit</div>
+    </div>
+
+    <div class="segmented" aria-hidden="true">
+      <button type="button">Long / Buy</button>
+      <button type="button" class="active">Short / Sell</button>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <div class="label">Available to trade</div>
+        <div class="value num" id="available">$100.0</div>
+      </div>
+
+      <div class="row">
+        <div class="posline">
+          <span class="label">Current position</span>
+          <span class="pill long" id="currentSide">LONG</span>
+        </div>
+        <div class="value num"><span id="currentShares">100.0</span> <span class="label">shares</span></div>
+      </div>
+
+      <div class="inputbox">
+        <div class="hint">Shares</div>
+        <input id="sharesInput" type="number" min="0" step="1" value="150" />
+      </div>
+
+      <div class="sliderwrap">
+        <input id="sharesSlider" type="range" min="0" max="500" step="1" value="150" />
+        <div class="pct num" id="pctBox">30%</div>
+      </div>
+
+      <div class="meta">
+        <span class="chip">Avg. <span class="num" id="avgPriceChip">50.0¢</span></span>
+        <span class="chip"><span class="num" id="matching">150.0</span> matching</span>
+      </div>
+
+      <div class="checkbox">
+        <input type="checkbox" id="reduceOnly" />
+        <label for="reduceOnly">Reduce only</label>
+      </div>
+    </div>
+
+    <button class="cta" type="button">Short Man City</button>
+
+    <div class="section">
+      <div class="row">
+        <div class="label">To pay</div>
+        <div class="value num" id="toPay">--</div>
+      </div>
+      <div class="row">
+        <div class="label">To receive</div>
+        <div class="value num" id="toReceive">$25.0</div>
+      </div>
+    </div>
+
+    <div class="footpanel">
+      <div class="summary">
+        <div class="row">
+          <div class="label">Net Position</div>
+          <div class="value num">
+            <span id="netShares">50.0</span> <span class="label">Shares</span>
+            <span class="pill short" id="netSide" style="margin-left:8px;">SHORT</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="label">To win</div>
+          <div class="value num" id="toWin">$50.0</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="row" style="align-items:flex-start;">
+          <div class="label">Breakdown</div>
+          <div class="muted" style="font-size:12px; line-height:1.35; max-width:260px;">
+            <div>Sell long proceeds: <span class="num" id="sellProceeds">$50.0</span></div>
+            <div>Short cost: <span class="num" id="shortCost">$25.0</span></div>
+            <div>Net cash flow: <span class="num" id="netCashFlow">$25.0</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    // Current position is fixed per your prompt: user currently LONG 100 shares.
+    const CONFIG = {
+      currentLongShares: 100.0,
+      contractPayoutUsd: 1.00,
+      sliderMaxShares: 500
+    };
+
+    // ====== HELPERS ======
+    const $ = (id) => document.getElementById(id);
+
+    function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+    function fmtUsd(x){
+      const v = Math.round(x * 10) / 10; // 1 decimal like screenshot
+      return "$" + v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+
+    function fmtNum1(x){
+      const v = Math.round(x * 10) / 10;
+      return v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+    }
+
+    function getCashBalance(){
+      const v = parseFloat($("cashBalanceInput").value || "0");
+      return Math.max(0, isFinite(v) ? v : 0);
+    }
+
+    function getAvgPriceUsd(){
+      // input in cents
+      const c = parseFloat($("avgPriceInputCents").value || "0");
+      const cents = clamp(isFinite(c) ? c : 0, 0, 100);
+      // normalize input box if user typed out of bounds
+      if (parseFloat($("avgPriceInputCents").value) !== cents) $("avgPriceInputCents").value = cents;
+      return cents / 100.0;
+    }
+
+    // ====== CORE LOGIC (per your spec) ======
+    // User starts LONG L shares.
+    // User enters SELL quantity Q in Short/Sell tab:
+    // - Closing long: closeShares = min(Q, L) => receive closeShares * avgPrice
+    // - Extra beyond long becomes new short: extraShort = max(Q - L, 0)
+    //   Cost to open short = extraShort * (1 - avgPrice)
+    //
+    // Net cashflow = sellProceeds - shortCost
+    // Show ONLY one of To pay / To receive depending on sign.
+    //
+    // Available to trade = 2 * L * avgPrice + cashBalance
+    // (this is your defined spendable headroom metric)
+    //
+    // Net position after order:
+    // net = L - Q (positive LONG, negative SHORT)
+    function recompute(){
+      const L = CONFIG.currentLongShares;
+
+      // Read inputs
+      const cashBalance = getCashBalance();
+      const avgPrice = getAvgPriceUsd(); // [0,1]
+      const Qraw = parseFloat($("sharesInput").value || "0");
+      const Q = clamp(isFinite(Qraw) ? Qraw : 0, 0, CONFIG.sliderMaxShares);
+
+      // Sync slider/input
+      if (parseFloat($("sharesSlider").value) !== Q) $("sharesSlider").value = Q;
+      if (parseFloat($("sharesInput").value) !== Q) $("sharesInput").value = Q;
+
+      // Reduce-only: cannot go net short => cap Q at L
+      if ($("reduceOnly").checked && Q > L){
+        $("sharesInput").value = L;
+        $("sharesSlider").value = L;
+        return recompute();
+      }
+
+      // Available to trade
+      const availableToTrade = (2 * L * avgPrice) + cashBalance;
+
+      // Position + cashflow math
+      const closeShares = Math.min(Q, L);
+      const extraShort = Math.max(Q - L, 0);
+
+      const sellProceeds = closeShares * avgPrice;           // receive
+      const shortCost   = extraShort * (1 - avgPrice);       // pay
+      const netCashFlow = sellProceeds - shortCost;          // + receive, - pay
+
+      const net = L - Q;
+      const netAbs = Math.abs(net);
+
+      // Render static bits
+      $("currentShares").textContent = fmtNum1(L);
+      $("avgPriceChip").textContent = (avgPrice * 100).toFixed(1) + "¢";
+      $("matching").textContent = fmtNum1(Q);
+
+      // Render Available
+      $("available").textContent = fmtUsd(availableToTrade);
+
+      // Render To pay / To receive (only one visible)
+      const toPayEl = $("toPay");
+      const toReceiveEl = $("toReceive");
+
+      if (Math.abs(netCashFlow) < 1e-9){
+        toPayEl.textContent = "--";
+        toReceiveEl.textContent = "--";
+      } else if (netCashFlow > 0){
+        toReceiveEl.textContent = fmtUsd(netCashFlow);
+        toPayEl.textContent = "--";
+      } else {
+        toPayEl.textContent = fmtUsd(Math.abs(netCashFlow));
+        toReceiveEl.textContent = "--";
+      }
+
+      // Net position label
+      const netSideEl = $("netSide");
+      $("netShares").textContent = fmtNum1(netAbs);
+      if (net < 0){
+        netSideEl.textContent = "SHORT";
+        netSideEl.classList.remove("long");
+        netSideEl.classList.add("short");
+      } else if (net > 0){
+        netSideEl.textContent = "LONG";
+        netSideEl.classList.remove("short");
+        netSideEl.classList.add("long");
+      } else {
+        netSideEl.textContent = "FLAT";
+        netSideEl.classList.remove("short");
+        netSideEl.classList.remove("long");
+      }
+
+      // To win = abs(net shares) * $1
+      $("toWin").textContent = fmtUsd(netAbs * CONFIG.contractPayoutUsd);
+
+      // Breakdown
+      $("sellProceeds").textContent = fmtUsd(sellProceeds);
+      $("shortCost").textContent = fmtUsd(shortCost);
+      $("netCashFlow").textContent = (netCashFlow >= 0 ? fmtUsd(netCashFlow) : ("-" + fmtUsd(Math.abs(netCashFlow))));
+
+      // Cosmetic percent box: shares as % of slider max
+      const pct = Math.round((Q / CONFIG.sliderMaxShares) * 100);
+      $("pctBox").textContent = pct + "%";
+    }
+
+    // ====== INIT ======
+    $("sharesSlider").max = String(CONFIG.sliderMaxShares);
+
+    $("sharesInput").addEventListener("input", recompute);
+    $("sharesSlider").addEventListener("input", () => {
+      $("sharesInput").value = $("sharesSlider").value;
+      recompute();
+    });
+
+    $("cashBalanceInput").addEventListener("input", recompute);
+    $("avgPriceInputCents").addEventListener("input", recompute);
+    $("reduceOnly").addEventListener("change", recompute);
+
+    recompute();
+
+    // Sanity: with defaults (L=100, avg=0.5, Q=150, cash=100):
+    // sellProceeds = 100*0.5 = $50
+    // shortCost = 50*(1-0.5) = $25
+    // netCashFlow = +$25 (receive)
+    // available = 2*100*0.5 + 100 = $200
+  </script>
 </body>
 </html>
