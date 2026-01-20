@@ -3,11 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Order Book – Reverse Position Simulator (Dynamic)</title>
+  <title>Order Book – Dynamic (Market/Limit + Yes/No + Slider by Available)</title>
   <style>
     :root{
       --bg:#0b0f14;
-      --panel:#0f141b;
       --panel2:#0c1117;
       --text:#e6e9ef;
       --muted:#9aa4b2;
@@ -17,7 +16,6 @@
       --bad:#ff6b6b;
       --chip:#141c25;
       --shadow: 0 10px 40px rgba(0,0,0,.45);
-      --radius: 14px;
     }
     *{box-sizing:border-box}
     body{
@@ -30,7 +28,7 @@
       padding:22px 12px;
     }
     .phone{
-      width:min(440px, 100%);
+      width:min(480px, 100%);
       border:1px solid rgba(255,255,255,.06);
       background: linear-gradient(180deg, rgba(255,255,255,.03), transparent 35%), var(--panel2);
       border-radius: 22px;
@@ -50,76 +48,8 @@
       display:flex;align-items:center;justify-content:center;
       font-weight:700;letter-spacing:.5px;color:#dfe6f3;flex:0 0 auto;
     }
-    .titleblock{min-width:0}
-    .title{font-size:22px;font-weight:700;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .title{font-size:22px;font-weight:700;line-height:1.15;}
     .subtitle{margin-top:4px;font-size:13px;color:var(--muted);}
-
-    .tabs{display:flex;padding:12px 18px 0 18px;gap:14px;font-weight:600;color:var(--muted);}
-    .tabs .active{color:var(--text);position:relative;padding-bottom:10px;}
-    .tabs .active:after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:rgba(255,255,255,.65);border-radius:999px;}
-
-    .segmented{
-      margin:16px 18px 0 18px;
-      display:flex;
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 12px;
-      overflow:hidden;
-      background: rgba(255,255,255,.02);
-    }
-    .segmented button{
-      flex:1;
-      padding:12px 10px;
-      border:0;
-      color:rgba(255,255,255,.55);
-      background:transparent;
-      font-weight:700;
-      cursor:not-allowed;
-    }
-    .segmented button.active{
-      background: var(--accent);
-      color:#171717;
-      cursor:default;
-    }
-
-    .section{padding:16px 18px;}
-    .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:10px 0;}
-    .label{color:var(--muted); font-size:14px}
-    .value{font-size:16px; font-weight:650}
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;
-      background:var(--chip);
-      border:1px solid rgba(255,255,255,.07);
-      padding:6px 10px;border-radius:999px;
-      font-size:12px;color:rgba(255,255,255,.75);
-    }
-
-    .posline{display:flex;gap:8px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:14px;}
-    .pill{
-      font-weight:800;letter-spacing:.6px;font-size:12px;
-      padding:4px 8px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.03);
-    }
-    .pill.long{color:var(--good)}
-    .pill.short{color:var(--bad)}
-
-    .inputbox{
-      margin-top:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
-      border-radius: 12px;
-      padding:10px 12px;
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .inputbox .hint{color:rgba(255,255,255,.35);font-weight:650;}
-    input[type="number"]{
-      width:140px;
-      background:transparent;border:0;outline:none;color:var(--text);
-      font-size:18px;font-weight:750;text-align:right;appearance:textfield;
-      font-variant-numeric: tabular-nums;
-    }
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
 
     .topinputs{
       padding:14px 18px 0 18px;
@@ -139,24 +69,116 @@
       font-weight:700;
       margin-bottom:6px;
     }
-    .field .inline{
-      display:flex;align-items:center;justify-content:space-between;gap:8px;
+    .inline{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .prefix,.suffix{color:rgba(255,255,255,.55);font-weight:750;}
+    input[type="number"]{
+      width:140px;
+      background:transparent;border:0;outline:none;color:var(--text);
+      font-size:18px;font-weight:750;text-align:right;appearance:textfield;
+      font-variant-numeric: tabular-nums;
     }
-    .prefix, .suffix{color:rgba(255,255,255,.55);font-weight:750;}
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    select{
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--text);
+      border-radius: 10px;
+      padding:8px 10px;
+      font-weight:750;
+      outline:none;
+    }
     .smallnote{color:rgba(255,255,255,.45);font-size:12px;margin-top:6px;line-height:1.25;}
+
+    .tabs{
+      display:flex;
+      padding:12px 18px 0 18px;
+      gap:14px;
+      font-weight:700;
+      color:var(--muted);
+      user-select:none;
+    }
+    .tab{
+      cursor:pointer;
+      padding-bottom:10px;
+      position:relative;
+    }
+    .tab.active{ color:var(--text); }
+    .tab.active:after{
+      content:"";
+      position:absolute;
+      left:0;right:0;bottom:0;
+      height:2px;
+      background:rgba(255,255,255,.65);
+      border-radius:999px;
+    }
+
+    .segmented{
+      margin:16px 18px 0 18px;
+      display:flex;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: 12px;
+      overflow:hidden;
+      background: rgba(255,255,255,.02);
+    }
+    .segmented button{
+      flex:1;
+      padding:12px 10px;
+      border:0;
+      color:rgba(255,255,255,.65);
+      background:transparent;
+      font-weight:850;
+      cursor:pointer;
+      user-select:none;
+    }
+    .segmented button.active{
+      background: var(--accent);
+      color:#171717;
+    }
+
+    .section{padding:16px 18px;}
+    .row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:10px 0;}
+    .label{color:var(--muted); font-size:14px}
+    .value{font-size:16px; font-weight:650}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;
+      background:var(--chip);
+      border:1px solid rgba(255,255,255,.07);
+      padding:6px 10px;border-radius:999px;
+      font-size:12px;color:rgba(255,255,255,.75);
+    }
+    .pill{
+      font-weight:900;letter-spacing:.6px;font-size:12px;
+      padding:4px 8px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.03);
+      text-transform:uppercase;
+    }
+    .pill.long{color:var(--good)}
+    .pill.short{color:var(--bad)}
+
+    .inputbox{
+      margin-top:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      border-radius: 12px;
+      padding:10px 12px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .inputbox .hint{color:rgba(255,255,255,.35);font-weight:750;}
 
     .sliderwrap{margin-top:14px;display:flex;gap:12px;align-items:center;}
     input[type="range"]{flex:1;accent-color: rgba(255,255,255,.55);}
     .pct{
-      width:56px;text-align:center;
+      width:110px;text-align:center;
       border:1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.18);
-      border-radius: 10px;padding:10px 8px;font-weight:800;color:rgba(255,255,255,.85);
+      border-radius: 10px;padding:10px 8px;font-weight:850;color:rgba(255,255,255,.85);
       font-variant-numeric: tabular-nums;
+      line-height:1.1;
     }
 
     .meta{margin-top:10px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;color:rgba(255,255,255,.72);font-size:13px;}
-
     .checkbox{margin-top:14px;display:flex;gap:10px;align-items:center;color:rgba(255,255,255,.80);}
     .checkbox input{width:18px;height:18px}
 
@@ -166,10 +188,11 @@
       color:#121212;border:0;
       width:calc(100% - 36px);
       padding:14px 12px;border-radius: 12px;
-      font-weight:850;font-size:16px;cursor:not-allowed;
+      font-weight:950;font-size:16px;
+      cursor:default;
     }
 
-    .footpanel{padding:14px 18px 18px 18px;background: rgba(255,255,255,.01);border-top:1px solid var(--line);}
+    .footpanel{padding:14px 18px 18px 18px;background: rgba(255,255,255,.01);border-top:1px solid rgba(255,255,255,.06);}
     .summary{
       border:1px solid rgba(255,255,255,.08);
       background: rgba(0,0,0,.18);
@@ -179,6 +202,7 @@
     .divider{height:1px;background:var(--line);margin:16px 0;}
     .muted{color:var(--muted)}
     .num{font-variant-numeric: tabular-nums}
+    .hidden{display:none !important;}
   </style>
 </head>
 
@@ -187,14 +211,14 @@
     <header>
       <div class="toprow">
         <div class="logo">MC</div>
-        <div class="titleblock">
+        <div>
           <div class="title">Manchester City</div>
           <div class="subtitle">EPL Winner 2026</div>
         </div>
       </div>
     </header>
 
-    <!-- New: top inputs -->
+    <!-- Inputs -->
     <div class="topinputs">
       <div class="field">
         <div class="fieldlabel">Total cash balance</div>
@@ -202,55 +226,93 @@
           <span class="prefix">$</span>
           <input id="cashBalanceInput" type="number" min="0" step="0.1" value="100" />
         </div>
-        <div class="smallnote">Used to compute “Available to trade”.</div>
+        <div class="smallnote">Used in “Available to trade”.</div>
       </div>
 
       <div class="field">
-        <div class="fieldlabel">Avg. price</div>
+        <div class="fieldlabel">Avg. price (YES)</div>
         <div class="inline">
-          <input id="avgPriceInputCents" type="number" min="0" max="100" step="0.1" value="50" />
+          <input id="avgYesPriceCents" type="number" min="0" max="100" step="0.1" value="50" />
           <span class="suffix">¢</span>
         </div>
-        <div class="smallnote">Sell long at this price. Short costs (1 − price).</div>
+        <div class="smallnote">NO price = 100 − YES price.</div>
+      </div>
+
+      <div class="field" style="grid-column:1 / span 2;">
+        <div class="fieldlabel">Current position</div>
+        <div class="inline">
+          <div style="display:flex; gap:10px; align-items:center;">
+            <select id="currentTypeSelect" aria-label="Current position type">
+              <option value="yes" selected>LONG (YES)</option>
+              <option value="no">SHORT (NO)</option>
+            </select>
+            <span class="muted" style="font-weight:800;">Shares</span>
+          </div>
+          <input id="currentQtyInput" type="number" min="0" step="1" value="100" />
+        </div>
+        <div class="smallnote">YES = long. NO = short. (Binary contract.)</div>
       </div>
     </div>
 
-    <div class="tabs" aria-hidden="true">
-      <div class="active">Market</div>
-      <div>Limit</div>
+    <!-- Market / Limit tabs -->
+    <div class="tabs" aria-label="Order type">
+      <div class="tab active" id="tabMarket">Market</div>
+      <div class="tab" id="tabLimit">Limit</div>
     </div>
 
-    <div class="segmented" aria-hidden="true">
-      <button type="button">Long / Buy</button>
-      <button type="button" class="active">Short / Sell</button>
+    <!-- Limit config -->
+    <div class="section" id="limitSection" class="hidden" style="padding-top:10px; padding-bottom:0;">
+      <div class="field" style="margin:0 18px;">
+        <div class="fieldlabel">Limit price (YES)</div>
+        <div class="inline">
+          <div class="checkbox" style="margin:0;">
+            <input type="checkbox" id="useAvgAsLimit" checked />
+            <label for="useAvgAsLimit">Use avg. price</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input id="limitYesPriceCents" type="number" min="0" max="100" step="0.1" value="50" />
+            <span class="suffix">¢</span>
+          </div>
+        </div>
+        <div class="smallnote">
+          When checked, limit YES price = avg YES price. For NO orders, limit NO price = 100 − limit YES.
+        </div>
+      </div>
+    </div>
+
+    <!-- Side toggle -->
+    <div class="segmented" aria-label="Side">
+      <button type="button" id="btnYes" class="active">Long / Buy YES</button>
+      <button type="button" id="btnNo">Short / Buy NO</button>
     </div>
 
     <div class="section">
       <div class="row">
         <div class="label">Available to trade</div>
-        <div class="value num" id="available">$100.0</div>
+        <div class="value num" id="available">$0.0</div>
       </div>
 
       <div class="row">
-        <div class="posline">
-          <span class="label">Current position</span>
-          <span class="pill long" id="currentSide">LONG</span>
+        <div class="label">Current position</div>
+        <div class="value num">
+          <span class="pill long" id="currentPill">LONG (YES)</span>
+          <span style="margin-left:10px;"><span id="currentShares">100.0</span> <span class="label">shares</span></span>
         </div>
-        <div class="value num"><span id="currentShares">100.0</span> <span class="label">shares</span></div>
       </div>
 
       <div class="inputbox">
-        <div class="hint">Shares</div>
+        <div class="hint" id="sharesHint">Shares</div>
         <input id="sharesInput" type="number" min="0" step="1" value="150" />
       </div>
 
       <div class="sliderwrap">
-        <input id="sharesSlider" type="range" min="0" max="500" step="1" value="150" />
-        <div class="pct num" id="pctBox">30%</div>
+        <input id="sharesSlider" type="range" min="0" max="400" step="1" value="150" />
+        <div class="pct num" id="sliderContext">Max<br><span class="muted">--</span></div>
       </div>
 
       <div class="meta">
-        <span class="chip">Avg. <span class="num" id="avgPriceChip">50.0¢</span></span>
+        <span class="chip">Exec YES: <span class="num" id="execYesChip">50.0¢</span></span>
+        <span class="chip">Exec NO: <span class="num" id="execNoChip">50.0¢</span></span>
         <span class="chip"><span class="num" id="matching">150.0</span> matching</span>
       </div>
 
@@ -258,9 +320,13 @@
         <input type="checkbox" id="reduceOnly" />
         <label for="reduceOnly">Reduce only</label>
       </div>
+
+      <div class="smallnote" id="sliderHelp" style="margin-top:10px;">
+        Slider max is based on “Available to trade” and the execution price per share.
+      </div>
     </div>
 
-    <button class="cta" type="button">Short Man City</button>
+    <button class="cta" type="button" id="ctaBtn">Buy YES</button>
 
     <div class="section">
       <div class="row">
@@ -269,7 +335,7 @@
       </div>
       <div class="row">
         <div class="label">To receive</div>
-        <div class="value num" id="toReceive">$25.0</div>
+        <div class="value num" id="toReceive">--</div>
       </div>
     </div>
 
@@ -278,171 +344,319 @@
         <div class="row">
           <div class="label">Net Position</div>
           <div class="value num">
-            <span id="netShares">50.0</span> <span class="label">Shares</span>
-            <span class="pill short" id="netSide" style="margin-left:8px;">SHORT</span>
+            <span id="netShares">0.0</span> <span class="label">Shares</span>
+            <span class="pill" id="netPill" style="margin-left:8px;">FLAT</span>
           </div>
         </div>
+
         <div class="row">
           <div class="label">To win</div>
-          <div class="value num" id="toWin">$50.0</div>
+          <div class="value num" id="toWin">$0.0</div>
         </div>
 
         <div class="divider"></div>
 
         <div class="row" style="align-items:flex-start;">
           <div class="label">Breakdown</div>
-          <div class="muted" style="font-size:12px; line-height:1.35; max-width:260px;">
-            <div>Sell long proceeds: <span class="num" id="sellProceeds">$50.0</span></div>
-            <div>Short cost: <span class="num" id="shortCost">$25.0</span></div>
-            <div>Net cash flow: <span class="num" id="netCashFlow">$25.0</span></div>
+          <div class="muted" style="font-size:12px; line-height:1.35; max-width:320px;">
+            <div>Sell (closing) proceeds: <span class="num" id="closeProceeds">$0.0</span></div>
+            <div>Buy (opening) cost: <span class="num" id="openCost">$0.0</span></div>
+            <div>Net cash flow: <span class="num" id="netCashFlow">$0.0</span></div>
           </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="muted" style="font-size:12px; line-height:1.35;">
+          <b>Conventions:</b> YES is bought/sold at YES price. NO is bought/sold at NO price (= 1 − YES).
+          Market uses avg price; Limit uses your limit price (or avg if selected).
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // ====== CONFIG ======
-    // Current position is fixed per your prompt: user currently LONG 100 shares.
-    const CONFIG = {
-      currentLongShares: 100.0,
-      contractPayoutUsd: 1.00,
-      sliderMaxShares: 500
+    // ===== State =====
+    const state = {
+      orderType: "market",   // 'market' | 'limit'
+      side: "yes"            // 'yes' (Buy YES) | 'no' (Buy NO)
     };
 
-    // ====== HELPERS ======
+    // ===== Helpers =====
     const $ = (id) => document.getElementById(id);
-
     function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
     function fmtUsd(x){
-      const v = Math.round(x * 10) / 10; // 1 decimal like screenshot
+      const v = Math.round(x * 10) / 10;
       return "$" + v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
-
     function fmtNum1(x){
       const v = Math.round(x * 10) / 10;
       return v.toLocaleString(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
     }
 
-    function getCashBalance(){
+    function getCash(){
       const v = parseFloat($("cashBalanceInput").value || "0");
       return Math.max(0, isFinite(v) ? v : 0);
     }
 
-    function getAvgPriceUsd(){
-      // input in cents
-      const c = parseFloat($("avgPriceInputCents").value || "0");
+    function getAvgYes(){
+      const c = parseFloat($("avgYesPriceCents").value || "0");
       const cents = clamp(isFinite(c) ? c : 0, 0, 100);
-      // normalize input box if user typed out of bounds
-      if (parseFloat($("avgPriceInputCents").value) !== cents) $("avgPriceInputCents").value = cents;
+      if (parseFloat($("avgYesPriceCents").value) !== cents) $("avgYesPriceCents").value = cents;
       return cents / 100.0;
     }
 
-    // ====== CORE LOGIC (per your spec) ======
-    // User starts LONG L shares.
-    // User enters SELL quantity Q in Short/Sell tab:
-    // - Closing long: closeShares = min(Q, L) => receive closeShares * avgPrice
-    // - Extra beyond long becomes new short: extraShort = max(Q - L, 0)
-    //   Cost to open short = extraShort * (1 - avgPrice)
-    //
-    // Net cashflow = sellProceeds - shortCost
-    // Show ONLY one of To pay / To receive depending on sign.
-    //
-    // Available to trade = 2 * L * avgPrice + cashBalance
-    // (this is your defined spendable headroom metric)
-    //
-    // Net position after order:
-    // net = L - Q (positive LONG, negative SHORT)
-    function recompute(){
-      const L = CONFIG.currentLongShares;
-
-      // Read inputs
-      const cashBalance = getCashBalance();
-      const avgPrice = getAvgPriceUsd(); // [0,1]
-      const Qraw = parseFloat($("sharesInput").value || "0");
-      const Q = clamp(isFinite(Qraw) ? Qraw : 0, 0, CONFIG.sliderMaxShares);
-
-      // Sync slider/input
-      if (parseFloat($("sharesSlider").value) !== Q) $("sharesSlider").value = Q;
-      if (parseFloat($("sharesInput").value) !== Q) $("sharesInput").value = Q;
-
-      // Reduce-only: cannot go net short => cap Q at L
-      if ($("reduceOnly").checked && Q > L){
-        $("sharesInput").value = L;
-        $("sharesSlider").value = L;
-        return recompute();
-      }
-
-      // Available to trade
-      const availableToTrade = (2 * L * avgPrice) + cashBalance;
-
-      // Position + cashflow math
-      const closeShares = Math.min(Q, L);
-      const extraShort = Math.max(Q - L, 0);
-
-      const sellProceeds = closeShares * avgPrice;           // receive
-      const shortCost   = extraShort * (1 - avgPrice);       // pay
-      const netCashFlow = sellProceeds - shortCost;          // + receive, - pay
-
-      const net = L - Q;
-      const netAbs = Math.abs(net);
-
-      // Render static bits
-      $("currentShares").textContent = fmtNum1(L);
-      $("avgPriceChip").textContent = (avgPrice * 100).toFixed(1) + "¢";
-      $("matching").textContent = fmtNum1(Q);
-
-      // Render Available
-      $("available").textContent = fmtUsd(availableToTrade);
-
-      // Render To pay / To receive (only one visible)
-      const toPayEl = $("toPay");
-      const toReceiveEl = $("toReceive");
-
-      if (Math.abs(netCashFlow) < 1e-9){
-        toPayEl.textContent = "--";
-        toReceiveEl.textContent = "--";
-      } else if (netCashFlow > 0){
-        toReceiveEl.textContent = fmtUsd(netCashFlow);
-        toPayEl.textContent = "--";
-      } else {
-        toPayEl.textContent = fmtUsd(Math.abs(netCashFlow));
-        toReceiveEl.textContent = "--";
-      }
-
-      // Net position label
-      const netSideEl = $("netSide");
-      $("netShares").textContent = fmtNum1(netAbs);
-      if (net < 0){
-        netSideEl.textContent = "SHORT";
-        netSideEl.classList.remove("long");
-        netSideEl.classList.add("short");
-      } else if (net > 0){
-        netSideEl.textContent = "LONG";
-        netSideEl.classList.remove("short");
-        netSideEl.classList.add("long");
-      } else {
-        netSideEl.textContent = "FLAT";
-        netSideEl.classList.remove("short");
-        netSideEl.classList.remove("long");
-      }
-
-      // To win = abs(net shares) * $1
-      $("toWin").textContent = fmtUsd(netAbs * CONFIG.contractPayoutUsd);
-
-      // Breakdown
-      $("sellProceeds").textContent = fmtUsd(sellProceeds);
-      $("shortCost").textContent = fmtUsd(shortCost);
-      $("netCashFlow").textContent = (netCashFlow >= 0 ? fmtUsd(netCashFlow) : ("-" + fmtUsd(Math.abs(netCashFlow))));
-
-      // Cosmetic percent box: shares as % of slider max
-      const pct = Math.round((Q / CONFIG.sliderMaxShares) * 100);
-      $("pctBox").textContent = pct + "%";
+    function getCurrentPos(){
+      const type = $("currentTypeSelect").value; // 'yes' | 'no'
+      const qRaw = parseFloat($("currentQtyInput").value || "0");
+      const qty = Math.max(0, isFinite(qRaw) ? qRaw : 0);
+      if (parseFloat($("currentQtyInput").value) !== qty) $("currentQtyInput").value = qty;
+      return { type, qty };
     }
 
-    // ====== INIT ======
-    $("sharesSlider").max = String(CONFIG.sliderMaxShares);
+    function getLimitYes(){
+      const useAvg = $("useAvgAsLimit").checked;
+      if (useAvg) return getAvgYes();
+
+      const c = parseFloat($("limitYesPriceCents").value || "0");
+      const cents = clamp(isFinite(c) ? c : 0, 0, 100);
+      if (parseFloat($("limitYesPriceCents").value) !== cents) $("limitYesPriceCents").value = cents;
+      return cents / 100.0;
+    }
+
+    function getExecPrices(){
+      const avgYes = getAvgYes();
+      const yes = (state.orderType === "market") ? avgYes : getLimitYes();
+      const no = 1 - yes;
+      return { yes, no, avgYes, avgNo: 1 - avgYes };
+    }
+
+    // Available to trade spec:
+    // Available to trade = 2 * long_shares_owned * avg_price + cash_balance.
+    // "long_shares_owned" means YES shares held (only if current position is YES).
+    function computeAvailableToTrade(pos, avgYes, cash){
+      const yesOwned = (pos.type === "yes") ? pos.qty : 0;
+      return (2 * yesOwned * avgYes) + cash;
+    }
+
+    // Reduce-only behavior:
+    // - Reduce-only should only allow trades that reduce absolute exposure.
+    // - If current is YES, only Buy NO reduces; max = current qty.
+    // - If current is NO, only Buy YES reduces; max = current qty.
+    // - If current qty = 0, reduce-only effectively blocks both.
+    function reduceOnlyMax(pos, side){
+      if (pos.qty <= 0) return 0;
+      if (pos.type === "yes" && side === "no") return pos.qty;
+      if (pos.type === "no"  && side === "yes") return pos.qty;
+      return 0;
+    }
+
+    // Slider max when NOT reduce-only:
+    // Prince requirement:
+    //   If available_to_trade = $200 and avg_price (YES) = 50c,
+    //   then max shares = 400.
+    //
+    // Generalization:
+    //   slider_max_shares = floor( available_to_trade / execution_price_per_share_for_this_side )
+    //
+    // Where execution price per share:
+    //   - Buy YES uses YES exec price
+    //   - Buy NO uses NO exec price
+    function nonReduceOnlyMax(availableToTrade, execPrices, side){
+      const px = (side === "yes") ? execPrices.yes : execPrices.no;
+      const eps = 1e-9;
+      if (px < eps) return 0; // if price is 0, trading "infinite" shares isn't meaningful; clamp to 0
+      return Math.floor(availableToTrade / px);
+    }
+
+    // Cashflow math:
+    // We assume the order is always "Buy YES" or "Buy NO" for quantity Q at execution prices.
+    //
+    // If current position is YES and you Buy NO:
+    //   - You sell YES up to current qty at YES price => proceeds
+    //   - You buy NO Q at NO price => cost
+    //   - Net = proceeds - cost
+    //   - Net position after = YES_qty - Q  (negative implies NO)
+    //
+    // If current position is NO and you Buy YES:
+    //   - You sell NO up to current qty at NO price => proceeds
+    //   - You buy YES Q at YES price => cost
+    //   - Net = proceeds - cost
+    //   - Net position after = Q - NO_qty
+    //
+    // If you buy same side as current:
+    //   - No closing proceeds
+    //   - Cost = Q * side_price
+    function computeOrderOutcome(pos, Q, execPrices, side){
+      const yesPx = execPrices.yes;
+      const noPx  = execPrices.no;
+
+      let closeProceeds = 0;
+      let openCost = 0;
+      let net; // + => YES, - => NO
+
+      if (side === "yes"){
+        openCost = Q * yesPx;
+        if (pos.type === "no"){
+          const closeQty = Math.min(Q, pos.qty);
+          closeProceeds = closeQty * noPx;
+          net = Q - pos.qty; // Q buys YES against existing NO
+        } else {
+          net = pos.qty + Q;
+        }
+      } else { // side === 'no'
+        openCost = Q * noPx;
+        if (pos.type === "yes"){
+          const closeQty = Math.min(Q, pos.qty);
+          closeProceeds = closeQty * yesPx;
+          net = pos.qty - Q; // buying NO reduces YES
+        } else {
+          net = -(pos.qty + Q);
+        }
+      }
+
+      const netCashFlow = closeProceeds - openCost; // + receive, - pay
+      return { closeProceeds, openCost, netCashFlow, net };
+    }
+
+    function setOrderType(type){
+      state.orderType = type;
+      $("tabMarket").classList.toggle("active", type === "market");
+      $("tabLimit").classList.toggle("active", type === "limit");
+      $("limitSection").classList.toggle("hidden", type !== "limit");
+      // keep limit input in sync if "use avg" checked
+      if ($("useAvgAsLimit").checked) {
+        $("limitYesPriceCents").value = $("avgYesPriceCents").value;
+      }
+      recompute();
+    }
+
+    function setSide(side){
+      state.side = side;
+      $("btnYes").classList.toggle("active", side === "yes");
+      $("btnNo").classList.toggle("active", side === "no");
+
+      $("ctaBtn").textContent = (side === "yes") ? "Buy YES" : "Buy NO";
+      $("sharesHint").textContent = (side === "yes") ? "Shares (buy YES)" : "Shares (buy NO)";
+
+      recompute();
+    }
+
+    function recompute(){
+      const cash = getCash();
+      const pos = getCurrentPos();
+      const exec = getExecPrices();
+
+      // Keep limit field synced when "Use avg" is on
+      if ($("useAvgAsLimit").checked) {
+        $("limitYesPriceCents").value = $("avgYesPriceCents").value;
+      }
+
+      // Available uses AVG (per your earlier spec)
+      const availableToTrade = computeAvailableToTrade(pos, exec.avgYes, cash);
+      $("available").textContent = fmtUsd(availableToTrade);
+
+      // Current pill
+      $("currentShares").textContent = fmtNum1(pos.qty);
+      const cp = $("currentPill");
+      if (pos.type === "yes"){
+        cp.textContent = "LONG (YES)";
+        cp.classList.remove("short");
+        cp.classList.add("long");
+      } else {
+        cp.textContent = "SHORT (NO)";
+        cp.classList.remove("long");
+        cp.classList.add("short");
+      }
+
+      // Show exec prices
+      $("execYesChip").textContent = (exec.yes * 100).toFixed(1) + "¢";
+      $("execNoChip").textContent  = (exec.no  * 100).toFixed(1) + "¢";
+
+      // Slider max logic per request
+      const reduceOnly = $("reduceOnly").checked;
+
+      let maxShares;
+      if (reduceOnly){
+        maxShares = Math.floor(reduceOnlyMax(pos, state.side));
+        $("sliderHelp").textContent = "Reduce-only: slider max = current position shares (only if reducing exposure).";
+      } else {
+        // Key fix: max = available / execution_price (YES or NO)
+        maxShares = nonReduceOnlyMax(availableToTrade, exec, state.side);
+        $("sliderHelp").textContent = "Slider max = Available to trade ÷ execution price (YES or NO).";
+      }
+
+      // Ensure slider max is at least 0 and set DOM
+      maxShares = Math.max(0, maxShares);
+      $("sharesSlider").max = String(Math.max(maxShares, 0));
+
+      // Context box
+      $("sliderContext").innerHTML = `Max<br><span class="muted">${fmtNum1(maxShares)}</span>`;
+
+      // Clamp current Q
+      const qRaw = parseFloat($("sharesInput").value || "0");
+      let Q = clamp(isFinite(qRaw) ? qRaw : 0, 0, maxShares);
+
+      // If reduce-only and maxShares=0, force Q=0
+      if (reduceOnly && maxShares === 0) Q = 0;
+
+      // Sync input & slider
+      if (parseFloat($("sharesInput").value) !== Q) $("sharesInput").value = Q;
+      if (parseFloat($("sharesSlider").value) !== Q) $("sharesSlider").value = Q;
+
+      $("matching").textContent = fmtNum1(Q);
+
+      // Compute cashflow + net position
+      const out = computeOrderOutcome(pos, Q, exec, state.side);
+
+      // Pay/Receive (only one shown)
+      if (Math.abs(out.netCashFlow) < 1e-9){
+        $("toPay").textContent = "--";
+        $("toReceive").textContent = "--";
+      } else if (out.netCashFlow > 0){
+        $("toReceive").textContent = fmtUsd(out.netCashFlow);
+        $("toPay").textContent = "--";
+      } else {
+        $("toPay").textContent = fmtUsd(Math.abs(out.netCashFlow));
+        $("toReceive").textContent = "--";
+      }
+
+      // Net position pill
+      const netAbs = Math.abs(out.net);
+      $("netShares").textContent = fmtNum1(netAbs);
+
+      const np = $("netPill");
+      if (out.net > 0){
+        np.textContent = "LONG (YES)";
+        np.classList.remove("short");
+        np.classList.add("long");
+      } else if (out.net < 0){
+        np.textContent = "SHORT (NO)";
+        np.classList.remove("long");
+        np.classList.add("short");
+      } else {
+        np.textContent = "FLAT";
+        np.classList.remove("long");
+        np.classList.remove("short");
+      }
+
+      // To win (simplified): abs(shares) * $1
+      $("toWin").textContent = fmtUsd(netAbs * 1.0);
+
+      // Breakdown
+      $("closeProceeds").textContent = fmtUsd(out.closeProceeds);
+      $("openCost").textContent = fmtUsd(out.openCost);
+      $("netCashFlow").textContent = (out.netCashFlow >= 0)
+        ? fmtUsd(out.netCashFlow)
+        : ("-" + fmtUsd(Math.abs(out.netCashFlow)));
+    }
+
+    // ===== Wire up UI =====
+    $("tabMarket").addEventListener("click", () => setOrderType("market"));
+    $("tabLimit").addEventListener("click", () => setOrderType("limit"));
+
+    $("btnYes").addEventListener("click", () => setSide("yes"));
+    $("btnNo").addEventListener("click", () => setSide("no"));
 
     $("sharesInput").addEventListener("input", recompute);
     $("sharesSlider").addEventListener("input", () => {
@@ -451,16 +665,36 @@
     });
 
     $("cashBalanceInput").addEventListener("input", recompute);
-    $("avgPriceInputCents").addEventListener("input", recompute);
+    $("avgYesPriceCents").addEventListener("input", recompute);
+
+    $("currentTypeSelect").addEventListener("change", recompute);
+    $("currentQtyInput").addEventListener("input", recompute);
+
     $("reduceOnly").addEventListener("change", recompute);
 
+    $("useAvgAsLimit").addEventListener("change", () => {
+      // Enable/disable manual limit price
+      $("limitYesPriceCents").disabled = $("useAvgAsLimit").checked;
+      if ($("useAvgAsLimit").checked) $("limitYesPriceCents").value = $("avgYesPriceCents").value;
+      recompute();
+    });
+    $("limitYesPriceCents").addEventListener("input", recompute);
+
+    // Init
+    $("limitYesPriceCents").disabled = $("useAvgAsLimit").checked;
+    setOrderType("market");
+    setSide("no"); // matches your screenshot default (Short/Sell / Buy NO)
     recompute();
 
-    // Sanity: with defaults (L=100, avg=0.5, Q=150, cash=100):
-    // sellProceeds = 100*0.5 = $50
-    // shortCost = 50*(1-0.5) = $25
-    // netCashFlow = +$25 (receive)
-    // available = 2*100*0.5 + 100 = $200
+    /*
+      Slider fix example:
+      - cash = 100
+      - current pos YES 100
+      - avg YES = 50c
+      Available = 2*100*0.5 + 100 = 200
+      If side = YES and exec YES = 0.5, maxShares = 200/0.5 = 400
+      If side = NO and exec NO = 0.5, maxShares = 400
+    */
   </script>
 </body>
 </html>
